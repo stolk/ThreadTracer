@@ -47,7 +47,7 @@ void draw_all(void)
 	draw_info();
 }
 
-//When you are done profiling, typically at program end, or earlier, you can generate the profile report.
+// When you are done profiling, typically at program end, or earlier, you can generate the profile report.
 
 tt_report( "threadtracer.json" );
 ```
@@ -62,4 +62,6 @@ Just add threadtracer.c to your project, and compile your sources with ```-D_GNU
 Start the Google Chrome browser, and in the URL bar, type ```chrome://tracing``` and then load the genererated threadtracer.json file.
 
 ![screenshot](https://pbs.twimg.com/media/DNWrAKnVQAMaSiw.png)
+
+Note that for the highlighted task, the detail view show that the thread got interrupted once preemptively, which causes it to run on a CPU core for only 48% of the time that the task took to complete.
 
