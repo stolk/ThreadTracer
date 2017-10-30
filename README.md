@@ -13,6 +13,7 @@ ThreadTracer is an inline profiler that is special in the following ways:
 * Will detect if threads were context-switched by scheduler, preemptively or voluntarily.
 * Computes duty-cycle for each scope: not just how long it ran, but also how much of that time, it was scheduled on a core.
 * Small light weight system, written in C. Just one header and one small implementation file.
+* Zero dependencies.
 
 ## Limitations
 * Doesn't show a live profile, but creates a report after the run, viewable with Google Chrome.
@@ -50,6 +51,11 @@ void draw_all(void)
 
 tt_report( "threadtracer.json" );
 ```
+
+## Building
+
+For 64bit Linux only.
+Just add threadtracer.c to your project, and compile your sources with ```-D_GNU_SOURCE``` flag so that RUSAGE_THREAD support is available for the getrusage() call.
 
 ## Viewing the report
 
