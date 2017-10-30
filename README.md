@@ -53,5 +53,7 @@ tt_report( "threadtracer.json" );
 
 ## Viewing the report
 
-Start the Google Chrome browser, and in the URL bar, type ```chrome:://tracing``` and then load the genererated threadtracer.json file.
+Start the Google Chrome browser, and in the URL bar, type ```chrome://tracing``` and then load the genererated threadtracer.json file.
+
+![screenshot](https://plus.google.com/photos/photo/110078821488315885564/6482531980669351378?icm=false&iso=true&authkey=CJXa28PulNedvAE&hl=en)
 
