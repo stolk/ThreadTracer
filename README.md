@@ -16,7 +16,7 @@ ThreadTracer is an inline profiler that is special in the following ways:
 * Zero dependencies.
 
 ## Limitations
-* Doesn't show a live profile, but creates a report after the run, [viewable with Google Chrome!](https://www.gamasutra.com/view/news/176420/Indepth_Using_Chrometracing_to_view_your_inline_profiling_data.php).
+* Doesn't show a live profile, but creates a report after the run, [viewable with Google Chrome](https://www.gamasutra.com/view/news/176420/Indepth_Using_Chrometracing_to_view_your_inline_profiling_data.php).
 * For 64bit Linux only.
 * Currently does not support asynchronous events that start on one thread, and finish on another.
 
@@ -70,6 +70,6 @@ The shading of the time slices shows the duty cycle: how much of the time was sp
 
 ## Acknowledgements
 
-* [chrome://tracing!](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool) for their excellent in-browser visualization.
-* [Remotery!](https://github.com/Celtoys/Remotery) and [Minitrace!](https://github.com/hrydgard/minitrace) for the inspiration, and showing how powerful inline profiling can be.
+* [chrome://tracing](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool) for their excellent in-browser visualization.
+* [Remotery](https://github.com/Celtoys/Remotery) and [Minitrace!](https://github.com/hrydgard/minitrace) for the inspiration, and showing how powerful inline profiling can be.
 
