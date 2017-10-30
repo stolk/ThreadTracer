@@ -61,7 +61,8 @@ Just add threadtracer.c to your project, and compile your sources with ```-D_GNU
 
 Start the Google Chrome browser, and in the URL bar, type ```chrome://tracing``` and then load the genererated threadtracer.json file.
 
-![screenshot](https://pbs.twimg.com/media/DNWrAKnVQAMaSiw.png)
+![screenshot](https://pbs.twimg.com/media/DNZe7tRVwAAm2_-.png)
 
-Note that for the highlighted task, the detail view show that the thread got interrupted once preemptively, which causes it to run on a CPU core for only 48% of the time that the task took to complete.
+Note that for the highlighted task, the detail view show that the thread got interrupted once preemptively, which causes it to run on a CPU core for only 81% of the time that the task took to complete.
 
+The shading of the time slices shows the duty cycle: how much of the time was spend running on a core.
