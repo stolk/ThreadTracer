@@ -16,7 +16,7 @@ ThreadTracer is an inline profiler that is special in the following ways:
 * Zero dependencies.
 
 ## Limitations
-* Doesn't show a live profile, but creates a report after the run, viewable with Google Chrome.
+* Doesn't show a live profile, but creates a report after the run, [viewable with Google Chrome!](https://www.gamasutra.com/view/news/176420/Indepth_Using_Chrometracing_to_view_your_inline_profiling_data.php).
 * For 64bit Linux only.
 * Currently does not support asynchronous events that start on one thread, and finish on another.
 
@@ -26,7 +26,7 @@ ThreadTracer is an inline profiler that is special in the following ways:
 ```
 #include <threadtracer.h>
 
-// Each thread that will be generating profiling events must make itself known to the system.
+// Each thread that will be generating profiling events needs to be made known to the system.
 // If you sign in with threadid -1, the threadid of calling thread will be used.
 
 tt_signin( -1, "mainthread" );
@@ -66,3 +66,10 @@ Start the Google Chrome browser, and in the URL bar, type ```chrome://tracing```
 Note that for the highlighted task, the detail view shows that the thread got interrupted once preemptively, which causes it to run on a CPU core for only 81% of the time that the task took to complete.
 
 The shading of the time slices shows the duty cycle: how much of the time was spend running on a core.
+
+
+## Acknowledgements
+
+* [chrome://tracing!](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool) for their excellent in-browser visualization.
+* [Remotery!](https://github.com/Celtoys/Remotery) and [Minitrace!](https://github.com/hrydgard/minitrace) for the inspiration, and showing how powerful inline profiling can be.
+
