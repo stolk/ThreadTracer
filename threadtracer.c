@@ -181,8 +181,15 @@ int tt_report( const char* oname )
 			fprintf
 			(
 				f,
-				"{\"cat\":\"%s\",\"pid\":%ld,\"tid\":%ld,\"ts\":%ld,\"ph\":\"%s\",\"name\":\"%s\",\"args\":%s}",
-				sample->cat, 0L, threadids[t], sample->wall_time / 1000, sample->phase, sample->tag, argstr
+				"{\"cat\":\"%s\","
+				"\"pid\":%ld,"
+				"\"tid\":%ld,"
+				"\"ts\":%ld,"
+				"\"tts\":%ld,"
+				"\"ph\":\"%s\","
+				"\"name\":\"%s\","
+				"\"args\":%s}",
+				sample->cat, 0L, threadids[t], sample->wall_time / 1000, sample->cpu_time / 1000, sample->phase, sample->tag, argstr
 			);
 
 			// Note: unfortunately, the chrome tracing JSON format no longer supports 'I' (instant) events.
