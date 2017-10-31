@@ -8,6 +8,8 @@
 #include <string.h>
 #include <pthread.h>
 
+#include "threadtracer.h"
+
 
 #define MAXTHREADS	12		//!< How many threads can we support?
 #define MAXSAMPLES	64*1024		//!< How many samples can we record for a thread?
@@ -66,7 +68,7 @@ int tt_signin( pthread_t tid, const char* threadname )
 	}
 	if ( numthreads == MAXTHREADS )
 		return -1;
-	if ( tid == -1 )
+	if ( tid == (pthread_t) -1 )
 		tid = pthread_self();
 	int slot = numthreads++;
 	threadnames[ slot ] = threadname;
