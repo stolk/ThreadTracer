@@ -198,6 +198,21 @@ int tt_report( const char* oname )
 		}
 		total += samplecounts[t];
 	}
+	for ( int t=0; t<numthreads; ++t )
+	{
+		fprintf( f, ",\n{" );
+		fprintf( f, 
+			"\"name\": \"thread_name\", "
+			"\"ph\": \"M\", "
+			"\"pid\":%ld, "
+			"\"tid\":%ld, "
+			"\"args\": { \"name\" : \"%s\" } }",
+			0L,
+			threadids[t],
+			threadnames[t]
+		);
+	}
+
 	fprintf( f, "\n]}\n" );
 	fclose(f);
 	fprintf( stderr, "ThreadTracer: Wrote %d events to %s\n", total, oname );
