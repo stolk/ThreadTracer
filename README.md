@@ -67,6 +67,16 @@ Note that for the highlighted task, the detail view shows that the thread got in
 
 The shading of the time slices shows the duty cycle: how much of the time was spend running on a core.
 
+## Skipping samples at launch.
+
+To avoid recording samples right after launch, you can skip the first seconds of recording with an environment variable. To skip the first five seconds, do:
+
+```
+$ THREADTRACERSKIP=5 ./foo
+ThreadTracer: clock resolution: 1 nsec.
+ThreadTracer: skipping the first 5 seconds before recording.
+ThreadTracer: Wrote 51780 events (6 discarded) to threadtracer.json
+```
 
 ## Acknowledgements
 

@@ -3,6 +3,7 @@
 
 #include <sys/resource.h>
 #include <sys/types.h>
+#include <stdlib.h>
 #include <time.h>
 #include <stdio.h>
 #include <string.h>
@@ -22,6 +23,9 @@ static int64_t walloffset=0;
 
 //! When (in cpu time) did we start tracing?
 static int64_t cpuoffset=0;
+
+//! Optionally, we can delay the recording until this timestamp using THREADTRACERSKIP env var.
+static int64_t wallcutoff=0;
 
 //! Are we currently recording events?
 static int isrecording=0;
@@ -59,11 +63,19 @@ int tt_signin( pthread_t tid, const char* threadname )
 		struct timespec wt, ct;
 		clock_gettime( CLOCK_MONOTONIC,         &wt );
 		clock_gettime( CLOCK_THREAD_CPUTIME_ID, &ct );
-		walloffset = wt.tv_sec;
-		cpuoffset  = ct.tv_sec;
+		walloffset = wt.tv_sec * 1000000000L + wt.tv_nsec;
+		cpuoffset  = ct.tv_sec * 1000000000L + ct.tv_nsec;
 		struct timespec res;
 		clock_getres( CLOCK_THREAD_CPUTIME_ID, &res );
-		fprintf( stderr, "clock resolution: %ld nsec.\n", res.tv_nsec );
+		fprintf( stderr, "ThreadTracer: clock resolution: %ld nsec.\n", res.tv_nsec );
+		wallcutoff = walloffset;
+		const char* d = getenv( "THREADTRACERSKIP" );
+		if ( d )
+		{
+			int delayinseconds = atoi( d );
+			wallcutoff += delayinseconds * 1000000000L;
+			fprintf( stderr, "ThreadTracer: skipping the first %d seconds before recording.\n", delayinseconds );
+		}
 		isrecording = 1;
 	}
 	if ( numthreads == MAXTHREADS )
@@ -103,8 +115,11 @@ int tt_stamp( const char* cat, const char* tag, const char* phase )
 		return -1;
 	}
 
-	const int64_t wall_nsec = ( wt.tv_sec - walloffset ) * 1000000000 + wt.tv_nsec;
-	const int64_t cpu_nsec  = ( ct.tv_sec - cpuoffset  ) * 1000000000 + ct.tv_nsec;
+	const int64_t wall_nsec = wt.tv_sec * 1000000000 + wt.tv_nsec;
+	const int64_t cpu_nsec  = ct.tv_sec * 1000000000 + ct.tv_nsec;
+
+	if ( wall_nsec < wallcutoff )
+		return -1;
 
 	for ( int i=0; i<numthreads; ++i )
 		if ( threadids[ i ] == tid )
@@ -116,18 +131,15 @@ int tt_stamp( const char* cat, const char* tag, const char* phase )
 				fprintf( stderr, "ThreadTracer: Stopped recording samples. Limit(%d) reached.\n", MAXSAMPLES );
 				return -1;
 			}
-			else
-			{
-				sample_t* sample = samples[ i ] + samplecounts[ i ];
-				sample->wall_time = wall_nsec;
-				sample->cpu_time  = cpu_nsec;
-				sample->num_involuntary_switches = ru.ru_nivcsw;
-				sample->num_voluntary_switches = ru.ru_nvcsw;
-				sample->tag = tag;
-				sample->cat = cat;
-				sample->phase = phase;
-				return samplecounts[ i ]++;
-			}
+			sample_t* sample = samples[ i ] + samplecounts[ i ];
+			sample->wall_time = wall_nsec - walloffset;
+			sample->cpu_time  = cpu_nsec - cpuoffset;
+			sample->num_involuntary_switches = ru.ru_nivcsw;
+			sample->num_voluntary_switches = ru.ru_nvcsw;
+			sample->tag = tag;
+			sample->cat = cat;
+			sample->phase = phase;
+			return samplecounts[ i ]++;
 		}
 
 	fprintf( stderr, "ThreadTracer: Thread(%ld) was not signed in before recording the first time stamp.\n", tid );
@@ -148,26 +160,25 @@ int tt_report( const char* oname )
 	if ( !f ) return -1;
 
 	int total = 0;
+	int discarded = 0;
 	fprintf( f, "{\"traceEvents\":[\n" );
 
-	// {"cat":"render","pid":0,"tid":1563752256,"ts":98098,"ph":"B","name":"glTexSubImage2D","args":{}},
-
-	int first=1;
 	for ( int t=0; t<numthreads; ++t )
 	{
 		for ( int s=0; s<samplecounts[t]; ++s )
 		{
 			const sample_t* sample = samples[t] + s;
 
-			if ( !first )
-				fprintf( f, ",\n" );
-
 			char argstr[128];
 			if ( sample->phase[0] == 'E' )
 			{
+				if ( s==0 ) { discarded++; goto notfound; }
 				int i=s-1;
 				while ( strcmp( samples[t][i].tag, sample->tag ) || samples[t][i].phase[0] != 'B' )
+				{
 					i--;
+					if ( i<0 ) { discarded++; goto notfound; }
+				};
 				const sample_t* beginsample = samples[t]+i;
 				int64_t preempted = sample->num_involuntary_switches - beginsample->num_involuntary_switches;
 				int64_t voluntary = sample->num_voluntary_switches - beginsample->num_voluntary_switches;
@@ -179,7 +190,8 @@ int tt_report( const char* oname )
 			else
 				snprintf( argstr, sizeof(argstr), "{}" );
 
-			first = 0;
+			if ( total )
+				fprintf( f, ",\n" );
 			fprintf
 			(
 				f,
@@ -193,10 +205,11 @@ int tt_report( const char* oname )
 				"\"args\":%s}",
 				sample->cat, 0L, threadids[t], sample->wall_time / 1000, sample->cpu_time / 1000, sample->phase, sample->tag, argstr
 			);
-
+			total++;
 			// Note: unfortunately, the chrome tracing JSON format no longer supports 'I' (instant) events.
+notfound:
+			(void)0;
 		}
-		total += samplecounts[t];
 	}
 	for ( int t=0; t<numthreads; ++t )
 	{
@@ -215,7 +228,7 @@ int tt_report( const char* oname )
 
 	fprintf( f, "\n]}\n" );
 	fclose(f);
-	fprintf( stderr, "ThreadTracer: Wrote %d events to %s\n", total, oname );
+	fprintf( stderr, "ThreadTracer: Wrote %d events (%d discarded) to %s\n", total, discarded, oname );
 	return total;
 }
 
