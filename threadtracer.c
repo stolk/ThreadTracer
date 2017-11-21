@@ -21,9 +21,6 @@ static int numthreads=0;
 //! When (in wallclock time) did we start tracing?
 static int64_t walloffset=0;
 
-//! When (in cpu time) did we start tracing?
-static int64_t cpuoffset=0;
-
 //! Optionally, we can delay the recording until this timestamp using THREADTRACERSKIP env var.
 static int64_t wallcutoff=0;
 
@@ -64,7 +61,6 @@ int tt_signin( pthread_t tid, const char* threadname )
 		clock_gettime( CLOCK_MONOTONIC,         &wt );
 		clock_gettime( CLOCK_THREAD_CPUTIME_ID, &ct );
 		walloffset = wt.tv_sec * 1000000000L + wt.tv_nsec;
-		cpuoffset  = ct.tv_sec * 1000000000L + ct.tv_nsec;
 		struct timespec res;
 		clock_getres( CLOCK_THREAD_CPUTIME_ID, &res );
 		fprintf( stderr, "ThreadTracer: clock resolution: %ld nsec.\n", res.tv_nsec );
@@ -133,7 +129,7 @@ int tt_stamp( const char* cat, const char* tag, const char* phase )
 			}
 			sample_t* sample = samples[ i ] + samplecounts[ i ];
 			sample->wall_time = wall_nsec - walloffset;
-			sample->cpu_time  = cpu_nsec - cpuoffset;
+			sample->cpu_time  = cpu_nsec;
 			sample->num_involuntary_switches = ru.ru_nivcsw;
 			sample->num_voluntary_switches = ru.ru_nvcsw;
 			sample->tag = tag;
