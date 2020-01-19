@@ -10,7 +10,7 @@ extern int tt_signin( pthread_t tid, const char* threadname );
 
 extern int tt_stamp( const char* cat, const char* tag, const char* phase );
 
-extern int tt_report( const char* oname );
+extern int tt_report( const char* oname = 0 );
 
 #ifdef __cplusplus
 
