@@ -150,20 +150,20 @@ int tt_stamp( const char* cat, const char* tag, const char* phase )
 
 int tt_report( const char* user_oname )
 {
-    char default_oname[256];
-    const char *oname;
-    
-    if (!user_oname)
-    {
-        long pid = (long)getpid();
-        snprintf(default_oname, 256, "threadtracer.%ld.json", pid);
-        oname = default_oname;
-    }
-    else
-    {
-        oname = user_oname;
-    }
-    
+	char default_oname[256];
+	const char *oname;
+
+	if (!user_oname)
+	{
+		long pid = (long)getpid();
+		snprintf(default_oname, 256, "threadtracer.%ld.json", pid);
+		oname = default_oname;
+	}
+	else
+	{
+		oname = user_oname;
+	}
+
 	if ( numthreads == 0 )
 	{
 		fprintf( stderr, "ThreadTracer: Nothing to report, 0 threads signed in.\n" );
