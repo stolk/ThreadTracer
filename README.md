@@ -52,9 +52,15 @@ void draw_all(void)
 tt_report(NULL);
 ```
 
+## Platforms
+
+ThreadTracer has been tested on:
+* Linux amd64
+* Linux x86
+* FreeBSD amd64
+
 ## Building
 
-For 64bit Linux only.
 Just add threadtracer.c to your project, and compile your sources with ```-D_GNU_SOURCE``` flag so that RUSAGE_THREAD support is available for the getrusage() call.
 
 ## Viewing the report
