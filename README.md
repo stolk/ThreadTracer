@@ -49,7 +49,7 @@ void draw_all(void)
 
 // When you are done profiling, typically at program end, or earlier, you can generate the profile report.
 
-tt_report();
+tt_report(NULL);
 ```
 
 ## Building
