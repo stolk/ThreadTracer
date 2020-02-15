@@ -49,7 +49,7 @@ void draw_all(void)
 
 // When you are done profiling, typically at program end, or earlier, you can generate the profile report.
 
-tt_report( "threadtracer.json" );
+tt_report();
 ```
 
 ## Building
@@ -82,4 +82,4 @@ ThreadTracer: Wrote 51780 events (6 discarded) to threadtracer.json
 
 * [chrome://tracing](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool) for their excellent in-browser visualization.
 * [Remotery](https://github.com/Celtoys/Remotery) and [Minitrace!](https://github.com/hrydgard/minitrace) for the inspiration, and showing how powerful inline profiling can be.
-
+* [Frogtoss](https://www.frogtoss.com/) for contributing and testing.

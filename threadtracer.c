@@ -3,6 +3,8 @@
 
 #include <sys/resource.h>
 #include <sys/types.h>
+#include <inttypes.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <time.h>
 #include <stdio.h>
@@ -149,20 +151,20 @@ int tt_stamp( const char* cat, const char* tag, const char* phase )
 
 int tt_report( const char* user_oname )
 {
-    char default_oname[256];
-    const char *oname;
-    
-    if (!user_oname)
-    {
-        long pid = (long)getpid();
-        snprintf(default_oname, 256, "threadtracer.%ld.json", pid);
-        oname = default_oname;
-    }
-    else
-    {
-        oname = user_oname;
-    }
-    
+	char default_oname[256];
+	const char *oname;
+
+	if (!user_oname)
+	{
+		long pid = (long)getpid();
+		snprintf(default_oname, 256, "threadtracer.%ld.json", pid);
+		oname = default_oname;
+	}
+	else
+	{
+		oname = user_oname;
+	}
+
 	if ( numthreads == 0 )
 	{
 		fprintf( stderr, "ThreadTracer: Nothing to report, 0 threads signed in.\n" );
@@ -197,13 +199,13 @@ int tt_report( const char* user_oname )
 				int64_t walldur   = sample->wall_time - beginsample->wall_time;
 				int64_t cpudur    = sample->cpu_time  - beginsample->cpu_time;
 				int64_t dutycycle = 100 * cpudur / walldur;
-                snprintf(argstr,
-                         sizeof(argstr),
-                         "{\"preempted\":%" PRId64 ",\"voluntary\":%" PRId64
-                         ",\"dutycycle(%%)\":%" PRId64 "}",
-                         preempted,
-                         voluntary,
-                         dutycycle);
+				snprintf
+				(
+					argstr,
+					sizeof(argstr),
+					"{\"preempted\":%" PRIu64 ",\"voluntary\":%" PRIu64 ",\"dutycycle(%%)\":%" PRIu64 "}",
+					preempted, voluntary, dutycycle
+				);
 			}
 			else
 				snprintf( argstr, sizeof(argstr), "{}" );
@@ -214,14 +216,14 @@ int tt_report( const char* user_oname )
 			(
 				f,
 				"{\"cat\":\"%s\","
-				"\"pid\":%ld,"
-				"\"tid\":%zu,"
-				"\"ts\":%" PRId64 ","
-				"\"tts\":%" PRId64 ","
+				"\"pid\":%" PRIu64 ","
+				"\"tid\":%" PRIu64 ","
+				"\"ts\":%"  PRIu64 ","
+				"\"tts\":%" PRIu64 ","
 				"\"ph\":\"%s\","
 				"\"name\":\"%s\","
 				"\"args\":%s}",
-				sample->cat, 0L, (uintptr_t)threadids[t], sample->wall_time / 1000, sample->cpu_time / 1000, sample->phase, sample->tag, argstr
+				sample->cat, (uint64_t)getpid(), (uint64_t)threadids[t], sample->wall_time / 1000, sample->cpu_time / 1000, sample->phase, sample->tag, argstr
 			);
 			total++;
 			// Note: unfortunately, the chrome tracing JSON format no longer supports 'I' (instant) events.
