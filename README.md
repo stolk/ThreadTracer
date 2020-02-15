@@ -27,9 +27,9 @@ ThreadTracer is an inline profiler that is special in the following ways:
 #include <threadtracer.h>
 
 // Each thread that will be generating profiling events needs to be made known to the system.
-// If you sign in with threadid -1, the threadid of calling thread will be used.
+// If you sign in with threadid TT_CALLING_THREAD, the threadid of calling thread will be used.
 
-tt_signin( -1, "mainthread" );
+tt_signin( TT_CALLING_THREAD, "mainthread" );
 
 // C Programs need to wrap sections of code with a begin and end macro.
 
@@ -49,7 +49,7 @@ void draw_all(void)
 
 // When you are done profiling, typically at program end, or earlier, you can generate the profile report.
 
-tt_report();
+tt_report(NULL);
 ```
 
 ## Building

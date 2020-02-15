@@ -6,11 +6,14 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define TT_CALLING_THREAD (pthread_t)(-1)
+
 extern int tt_signin( pthread_t tid, const char* threadname );
 
 extern int tt_stamp( const char* cat, const char* tag, const char* phase );
 
-extern int tt_report( const char* oname = 0 );
+extern int tt_report( const char* oname );
 
 #ifdef __cplusplus
 

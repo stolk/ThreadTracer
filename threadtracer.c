@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <pthread.h>
+#include <inttypes.h>
 
 #include "threadtracer.h"
 
@@ -141,7 +142,7 @@ int tt_stamp( const char* cat, const char* tag, const char* phase )
 			return samplecounts[ i ]++;
 		}
 
-	fprintf( stderr, "ThreadTracer: Thread(%ld) was not signed in before recording the first time stamp.\n", tid );
+	fprintf( stderr, "ThreadTracer: Thread(%zu) was not signed in before recording the first time stamp.\n", (uintptr_t)tid );
 	fprintf( stderr, "ThreadTracer: Recording has stopped due to sign-in error.\n" );
 	isrecording = 0;
 	return -1;
@@ -237,10 +238,10 @@ notfound:
 			"\"name\": \"thread_name\", "
 			"\"ph\": \"M\", "
 			"\"pid\":%ld, "
-			"\"tid\":%ld, "
+			"\"tid\":%zu, "
 			"\"args\": { \"name\" : \"%s\" } }",
 			0L,
-			threadids[t],
+            (uintptr_t)threadids[t],
 			threadnames[t]
 		);
 	}
