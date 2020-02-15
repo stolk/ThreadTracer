@@ -240,8 +240,8 @@ notfound:
 			"\"pid\":%ld, "
 			"\"tid\":%zu, "
 			"\"args\": { \"name\" : \"%s\" } }",
-			0L,
-            (uintptr_t)threadids[t],
+			(long)getpid(),
+			(uintptr_t)threadids[t],
 			threadnames[t]
 		);
 	}
