@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <pthread.h>
+#include <inttypes.h>
 
 #include "threadtracer.h"
 
@@ -139,7 +140,7 @@ int tt_stamp( const char* cat, const char* tag, const char* phase )
 			return samplecounts[ i ]++;
 		}
 
-	fprintf( stderr, "ThreadTracer: Thread(%ld) was not signed in before recording the first time stamp.\n", tid );
+	fprintf( stderr, "ThreadTracer: Thread(%zu) was not signed in before recording the first time stamp.\n", (uintptr_t)tid );
 	fprintf( stderr, "ThreadTracer: Recording has stopped due to sign-in error.\n" );
 	isrecording = 0;
 	return -1;
@@ -196,7 +197,13 @@ int tt_report( const char* user_oname )
 				int64_t walldur   = sample->wall_time - beginsample->wall_time;
 				int64_t cpudur    = sample->cpu_time  - beginsample->cpu_time;
 				int64_t dutycycle = 100 * cpudur / walldur;
-				snprintf( argstr, sizeof(argstr), "{\"preempted\":%ld,\"voluntary\":%ld,\"dutycycle(%%)\":%ld}", preempted, voluntary, dutycycle );
+                snprintf(argstr,
+                         sizeof(argstr),
+                         "{\"preempted\":%" PRId64 ",\"voluntary\":%" PRId64
+                         ",\"dutycycle(%%)\":%" PRId64 "}",
+                         preempted,
+                         voluntary,
+                         dutycycle);
 			}
 			else
 				snprintf( argstr, sizeof(argstr), "{}" );
@@ -208,13 +215,13 @@ int tt_report( const char* user_oname )
 				f,
 				"{\"cat\":\"%s\","
 				"\"pid\":%ld,"
-				"\"tid\":%ld,"
-				"\"ts\":%ld,"
-				"\"tts\":%ld,"
+				"\"tid\":%zu,"
+				"\"ts\":%" PRId64 ","
+				"\"tts\":%" PRId64 ","
 				"\"ph\":\"%s\","
 				"\"name\":\"%s\","
 				"\"args\":%s}",
-				sample->cat, 0L, threadids[t], sample->wall_time / 1000, sample->cpu_time / 1000, sample->phase, sample->tag, argstr
+				sample->cat, 0L, (uintptr_t)threadids[t], sample->wall_time / 1000, sample->cpu_time / 1000, sample->phase, sample->tag, argstr
 			);
 			total++;
 			// Note: unfortunately, the chrome tracing JSON format no longer supports 'I' (instant) events.
@@ -229,10 +236,10 @@ notfound:
 			"\"name\": \"thread_name\", "
 			"\"ph\": \"M\", "
 			"\"pid\":%ld, "
-			"\"tid\":%ld, "
+			"\"tid\":%zu, "
 			"\"args\": { \"name\" : \"%s\" } }",
 			0L,
-			threadids[t],
+            (uintptr_t)threadids[t],
 			threadnames[t]
 		);
 	}
