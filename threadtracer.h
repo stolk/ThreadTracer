@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-#define TT_CALLING_THREAD (struct pthread*)-1
+#define TT_CALLING_THREAD (pthread_t)(-1)
 
 extern int tt_signin( pthread_t tid, const char* threadname );
 
