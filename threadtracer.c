@@ -142,7 +142,7 @@ int tt_stamp( const char* cat, const char* tag, const char* phase )
 			return samplecounts[ i ]++;
 		}
 
-	fprintf( stderr, "ThreadTracer: Thread(%zu) was not signed in before recording the first time stamp.\n", (uintptr_t)tid );
+	fprintf( stderr, "ThreadTracer: Thread(%" PRIu64 ") was not signed in before recording the first time stamp.\n", (uintptr_t)tid );
 	fprintf( stderr, "ThreadTracer: Recording has stopped due to sign-in error.\n" );
 	isrecording = 0;
 	return -1;
@@ -238,7 +238,7 @@ notfound:
 			"\"name\": \"thread_name\", "
 			"\"ph\": \"M\", "
 			"\"pid\":%ld, "
-			"\"tid\":%zu, "
+			"\"tid\":%" PRIu64 ", "
 			"\"args\": { \"name\" : \"%s\" } }",
 			(long)getpid(),
 			(uintptr_t)threadids[t],
