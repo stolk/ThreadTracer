@@ -154,6 +154,7 @@ int tt_report( const char* user_oname )
 	char default_oname[256];
 	const char *oname;
 
+	isrecording = 0;
 	if (!user_oname)
 	{
 		long pid = (long)getpid();
