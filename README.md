@@ -56,6 +56,7 @@ tt_report(NULL);
 ThreadTracer has been tested on:
 * Linux amd64
 * Linux x86
+* Linux RISCV
 * FreeBSD amd64
 
 ## Building
