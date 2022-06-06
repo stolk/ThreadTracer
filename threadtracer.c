@@ -16,7 +16,7 @@
 #include "threadtracer.h"
 
 
-#define MAXTHREADS	12		//!< How many threads can we support?
+#define MAXTHREADS	16		//!< How many threads can we support?
 #define MAXSAMPLES	64*1024		//!< How many samples can we record for a thread?
 
 //! How many threads are we currently tracing?
@@ -79,7 +79,10 @@ int tt_signin( pthread_t tid, const char* threadname )
 		isrecording = 1;
 	}
 	if ( numthreads == MAXTHREADS )
+	{
+		fprintf(stderr,"Exceeded MAXTHREADS(%d) when signing in for ThreadTracer.\n",MAXTHREADS);
 		return -1;
+	}
 	if ( tid == (pthread_t) -1 )
 		tid = pthread_self();
 	int slot = numthreads++;
@@ -142,7 +145,7 @@ int tt_stamp( const char* cat, const char* tag, const char* phase )
 			return samplecounts[ i ]++;
 		}
 
-	fprintf( stderr, "ThreadTracer: Thread(%" PRIu64 ") was not signed in before recording the first time stamp.\n", (uint64_t)tid );
+	fprintf( stderr, "ThreadTracer: Thread(0x%" PRIx64 ") was not signed in before recording the first time stamp.\n", (uint64_t)tid );
 	fprintf( stderr, "ThreadTracer: Recording has stopped due to sign-in error.\n" );
 	isrecording = 0;
 	return -1;
