@@ -16,7 +16,7 @@
 #include "threadtracer.h"
 
 
-#define MAXTHREADS	16		//!< How many threads can we support?
+#define MAXTHREADS	18		//!< How many threads can we support?
 #define MAXSAMPLES	64*1024		//!< How many samples can we record for a thread?
 
 //! How many threads are we currently tracing?
