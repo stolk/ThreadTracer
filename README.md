@@ -51,11 +51,15 @@ void draw_all(void)
 tt_report(NULL);
 ```
 
+## Threading contract
+
+* Every thread that records events must call `tt_signin` before its first `TT_BEGIN`, `TT_END` or `tt_stamp`. Concurrent `tt_signin` calls are safe.
+* `tt_report` must be called from a single thread, after all other threads have been joined. No thread may call `tt_stamp` while `tt_report` is running.
+
 ## Platforms
 
 ThreadTracer has been tested on:
-* Linux amd64
-* Linux x86
+* Linux x86-64 (amd64)
 * Linux RISCV
 * FreeBSD amd64
 

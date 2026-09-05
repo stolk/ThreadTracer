@@ -5,18 +5,17 @@
 #include <sys/types.h>
 #include <inttypes.h>
 #include <unistd.h>
+#include <stdatomic.h>
 #include <stdlib.h>
 #include <time.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <string.h>
 #include <pthread.h>
-#include <inttypes.h>
 
 #include "threadtracer.h"
 
 
-#define MAXTHREADS	18		//!< How many threads can we support?
+#define MAXTHREADS	64		//!< How many threads can we support?
 #define MAXSAMPLES	64*1024		//!< How many samples can we record for a thread?
 
 //! How many threads are we currently tracing?
@@ -29,7 +28,7 @@ static int64_t walloffset=0;
 static int64_t wallcutoff=0;
 
 //! Are we currently recording events?
-static int isrecording=0;
+static atomic_int isrecording=0;
 
 //! The information we record for a trace event.
 typedef struct
@@ -43,8 +42,8 @@ typedef struct
 	int64_t num_voluntary_switches;		//!< number of context switches (cooperative)
 } sample_t;
 
-//! The samples recorded, per thread.
-static sample_t samples[ MAXTHREADS ][ MAXSAMPLES ];
+//! The samples recorded, per thread. Rows are allocated on sign-in.
+static sample_t* samples[ MAXTHREADS ];
 
 //! The number of samples recorded, per thread.
 static int samplecounts[ MAXTHREADS ];
@@ -55,10 +54,22 @@ static const char* threadnames[ MAXTHREADS ];
 //! The thread-ids.
 static pthread_t threadids[ MAXTHREADS ];
 
+//! Protects tt_signin() against concurrent sign-ins.
+static pthread_mutex_t signinlock = PTHREAD_MUTEX_INITIALIZER;
+
 
 //! Before tracing, a thread should make itself known to ThreadTracer.
 int tt_signin( pthread_t tid, const char* threadname )
 {
+	// Allocated before the lock, so a failure leaves no state to roll back.
+	// No initialization needed: every field of a sample is written before it is read.
+	sample_t* row = malloc( sizeof( sample_t ) * MAXSAMPLES );
+	if ( !row )
+	{
+		fprintf( stderr, "ThreadTracer: Failed to allocate %d samples. Not recording this thread.\n", MAXSAMPLES );
+		return -1;
+	}
+	pthread_mutex_lock( &signinlock );
 	if ( numthreads == 0 )
 	{
 		struct timespec wt, ct;
@@ -76,19 +87,23 @@ int tt_signin( pthread_t tid, const char* threadname )
 			wallcutoff += delayinseconds * 1000000000L;
 			fprintf( stderr, "ThreadTracer: skipping the first %d seconds before recording.\n", delayinseconds );
 		}
-		isrecording = 1;
+		atomic_store( &isrecording, 1 );
 	}
 	if ( numthreads == MAXTHREADS )
 	{
 		fprintf(stderr,"Exceeded MAXTHREADS(%d) when signing in for ThreadTracer.\n",MAXTHREADS);
+		free( row );
+		pthread_mutex_unlock( &signinlock );
 		return -1;
 	}
 	if ( tid == (pthread_t) -1 )
 		tid = pthread_self();
 	int slot = numthreads++;
+	samples[ slot ] = row;
 	threadnames[ slot ] = threadname;
 	threadids[ slot ] = tid;
 	samplecounts[ slot ] = 0;
+	pthread_mutex_unlock( &signinlock );
 	return slot;
 }
 
@@ -96,7 +111,7 @@ int tt_signin( pthread_t tid, const char* threadname )
 //! Record a timestamp.
 int tt_stamp( const char* cat, const char* tag, const char* phase )
 {
-	if ( !isrecording )
+	if ( !atomic_load( &isrecording ) )
 	{
 		if ( !numthreads )
 			fprintf( stderr, "ThreadTracer: ERROR. Threads did not sign in yet. Cannot record.\n" );
@@ -113,7 +128,7 @@ int tt_stamp( const char* cat, const char* tag, const char* phase )
 	rv = getrusage( RUSAGE_THREAD, &ru );
 	if ( rv < 0 )
 	{
-		isrecording = 0;
+		atomic_store( &isrecording, 0 );
 		fprintf( stderr, "ThreadTracer: rusage() failed. Stopped Recording.\n" );
 		return -1;
 	}
@@ -130,7 +145,7 @@ int tt_stamp( const char* cat, const char* tag, const char* phase )
 			const int cnt = samplecounts[ i ];
 			if ( cnt >= MAXSAMPLES )
 			{
-				isrecording = 0;
+				atomic_store( &isrecording, 0 );
 				fprintf( stderr, "ThreadTracer: Stopped recording samples. Limit(%d) reached.\n", MAXSAMPLES );
 				return -1;
 			}
@@ -147,7 +162,7 @@ int tt_stamp( const char* cat, const char* tag, const char* phase )
 
 	fprintf( stderr, "ThreadTracer: Thread(0x%" PRIx64 ") was not signed in before recording the first time stamp.\n", (uint64_t)tid );
 	fprintf( stderr, "ThreadTracer: Recording has stopped due to sign-in error.\n" );
-	isrecording = 0;
+	atomic_store( &isrecording, 0 );
 	return -1;
 }
 
@@ -157,7 +172,7 @@ int tt_report( const char* user_oname )
 	char default_oname[256];
 	const char *oname;
 
-	isrecording = 0;
+	atomic_store( &isrecording, 0 );
 	if (!user_oname)
 	{
 		long pid = (long)getpid();
@@ -202,7 +217,7 @@ int tt_report( const char* user_oname )
 				int64_t voluntary = sample->num_voluntary_switches - beginsample->num_voluntary_switches;
 				int64_t walldur   = sample->wall_time - beginsample->wall_time;
 				int64_t cpudur    = sample->cpu_time  - beginsample->cpu_time;
-				int64_t dutycycle = 100 * cpudur / walldur;
+				int64_t dutycycle = ( walldur > 0 ) ? 100 * cpudur / walldur : 100;
 				snprintf
 				(
 					argstr,
@@ -237,8 +252,10 @@ notfound:
 	}
 	for ( int t=0; t<numthreads; ++t )
 	{
-		fprintf( f, ",\n{" );
-		fprintf( f, 
+		if ( total || t )
+			fprintf( f, ",\n" );
+		fprintf( f,
+			"{"
 			"\"name\": \"thread_name\", "
 			"\"ph\": \"M\", "
 			"\"pid\":%ld, "
